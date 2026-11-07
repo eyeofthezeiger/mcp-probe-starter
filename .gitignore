@@ -1,0 +1,9 @@
+node_modules/
+out/
+coverage/
+.env
+.env.*
+!.env.example
+probe.config.json
+*.log
+.DS_Store

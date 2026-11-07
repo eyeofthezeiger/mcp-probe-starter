@@ -1,0 +1,61 @@
+{
+  "output_dir": "out",
+  "client": { "name": "mcp-probe", "version": "0.1.0" },
+  "default_profiles": ["plain"],
+  "profiles": {
+    "plain": {
+      "description": "Baseline: no optional client capabilities, no extra headers."
+    },
+    "mcp-apps": {
+      "description": "Advertise MCP Apps UI support, like hosts that render tool UIs. Check the shape against the current MCP Apps spec.",
+      "capabilities": {
+        "extensions": {
+          "io.modelcontextprotocol/ui": { "mimeTypes": ["text/html;profile=mcp-app"] }
+        }
+      }
+    },
+    "github-no-form-deferral": {
+      "description": "mcp-apps plus GitHub's documented feature flag that runs write tools directly instead of opening a form first.",
+      "capabilities": {
+        "extensions": {
+          "io.modelcontextprotocol/ui": { "mimeTypes": ["text/html;profile=mcp-app"] }
+        }
+      },
+      "headers": { "X-MCP-Features": "mcp_apps_disable_form_deferral" }
+    }
+  },
+  "servers": [
+    {
+      "key": "fake",
+      "description": "The bundled fake server over stdio. No network, no credentials. Good first run.",
+      "transport": "stdio",
+      "command": "node",
+      "args": ["test/fixtures/stdio-server.ts"],
+      "profiles": ["plain", "mcp-apps"],
+      "registry": {
+        "provider": "fake",
+        "auth_methods": ["none"],
+        "source_url": "https://github.com/eyeofthezeiger/mcp-probe-starter"
+      }
+    },
+    {
+      "key": "github",
+      "description": "GitHub's remote MCP server with a personal access token.",
+      "transport": "streamable-http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": { "Authorization": "Bearer ${GITHUB_PAT}" },
+      "profiles": ["plain", "mcp-apps", "github-no-form-deferral"],
+      "registry": { "provider": "github", "auth_methods": ["personal-access-token"] },
+      "read_only_calls": [{ "tool": "get_me", "arguments": {} }]
+    },
+    {
+      "key": "atlassian",
+      "description": "Off by default. OAuth-only servers need a token you got elsewhere. See docs/adding-a-server.md.",
+      "enabled": false,
+      "transport": "streamable-http",
+      "url": "https://mcp.atlassian.com/v2/mcp",
+      "headers": { "Authorization": "Bearer ${ATLASSIAN_MCP_TOKEN}" },
+      "registry": { "provider": "atlassian", "auth_methods": ["oauth2"] }
+    }
+  ]
+}
